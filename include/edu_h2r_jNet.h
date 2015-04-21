@@ -41,14 +41,6 @@ JNIEXPORT jfloatArray JNICALL Java_edu_h2r_jNet_forwardTo
 
 /*
  * Class:     edu_h2r_jNet
- * Method:    setMemoryDataLayer
- * Signature: (Ljava/lang/String;[F[F)V
- */
-JNIEXPORT void JNICALL Java_edu_h2r_jNet_setMemoryDataLayer
-  (JNIEnv *, jobject, jstring, jfloatArray, jfloatArray);
-
-/*
- * Class:     edu_h2r_jNet
  * Method:    getLayerNames
  * Signature: ()[Ljava/lang/String;
  */
