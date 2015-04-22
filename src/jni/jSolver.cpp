@@ -1,15 +1,17 @@
 #include <string>
 // #include <setjmp.h>
 
+//#include "jni_exception.h"
 #include "util.hpp"
 #include "edu_h2r_jSolver.h"
 
 using caffe::Solver;
+using caffe::Net;
+using caffe::LayerParameter;
 
 
 JNIEXPORT jlong JNICALL Java_edu_h2r_jSolver_createSolver(JNIEnv *env,
                                             jobject obj, jstring solverFile) {
-
     const char* cSolverFile = env->GetStringUTFChars(solverFile, NULL);
 
     caffe::SolverParameter solver_param;
@@ -33,6 +35,12 @@ JNIEXPORT jlong JNICALL Java_edu_h2r_jSolver_createSolver(JNIEnv *env,
 
     env->ReleaseStringUTFChars(solverFile, cSolverFile);
 
+    // Send the input scale back to java
+    caffe::NetParameter net_param;
+    caffe::ReadProtoFromTextFileOrDie(solver_param.net(), &net_param);
+    const LayerParameter& layer_param = net_param.layer(0);
+    env->SetFloatField(obj, getObjField(env, obj, "inputScale", "F"), layer_param.transform_param().scale());
+
     return reinterpret_cast<jlong>(solver);
 }
 
@@ -44,6 +52,21 @@ JNIEXPORT jlong JNICALL Java_edu_h2r_jSolver_getNetPointer(JNIEnv *env, jobject 
 JNIEXPORT void JNICALL Java_edu_h2r_jSolver_train(JNIEnv *env, jobject obj) {
     Solver<float> *solver = getInternalObject<Solver<float> >(env, obj);
     solver->Solve();
+}
+
+JNIEXPORT void JNICALL Java_edu_h2r_jSolver_trainOneStep(JNIEnv *env, jobject obj){
+    Solver<float> *solver = getInternalObject<Solver<float> >(env, obj);
+    Net<float> *net_ = solver->net().get();
+
+    LOG(INFO) << "Solving " << net_->name();
+
+    solver->Step(1);
+
+    float loss;
+    int iter_ = solver->iter();
+    net_->ForwardPrefilled(&loss);
+
+    LOG(INFO) << "Optimization Done.";
 }
 
 JNIEXPORT void JNICALL Java_edu_h2r_jSolver__1dispose(JNIEnv *env, jobject obj) {
